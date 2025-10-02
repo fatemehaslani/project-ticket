@@ -1,3 +1,56 @@
-from django.shortcuts import render
+
+from django.http import HttpResponse
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+
+from tickets.forms import TicketForm
+from tickets.models import *
+
 
 # Create your views here.
+def index(request):
+    tickets = Ticket.objects.prefetch_related('tags').all()
+    return render(request, template_name='index.html', context={'tickets': tickets})
+
+def ticket_create(request):
+    if request.method == "POST":
+        form = TicketForm(request.POST)  # کاربر فرم پر کرده همش میشنه داخل field
+        if form.is_valid():
+            new_ticket = form.save(commit=False)
+            new_ticket.created_by_id = 1
+            new_ticket.save()
+            messages.success(request, "Your ticket has been created successfully!")
+            return redirect("tickets")
+    else:
+        form = TicketForm()
+    return render(request, "create_ticket.html", {"form": form})
+
+def ticket_edit(request, id):
+    ticket = get_object_or_404(Ticket, id=id)
+
+    if request.method == "POST":
+        form = TicketForm(request.POST, instance=ticket)
+        if form.is_valid():
+            form.save()
+            messages.info(request, f"Ticket #{id} edited successfully.")
+            return redirect("tickets-detail", id=ticket.id)
+    else:
+        form = TicketForm(instance=ticket)
+
+    return render(request, "create_ticket.html", {
+        "form": form,
+        "ticket": ticket,
+    })
+
+def ticket_delete(request, id):
+    ticket = get_object_or_404(Ticket, id=id)
+
+    ticket.delete()
+
+    messages.success(request, 'Ticket Deleted successfully!')
+
+    return redirect('tickets')  # میره یه path دیگه
+
+def ticket_detail(request, id):
+    return  HttpResponse("ok")
