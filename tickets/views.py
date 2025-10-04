@@ -85,3 +85,4 @@ def color_mode(request):
 
     page = request.session.get('page_route_name')
     return HttpResponseRedirect(reverse(page))
+
