@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="card shadow-sm p-4">
+            <h2 class="mb-4">Submit a Ticket</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}  {% comment %}هر کدوم از اینارو پاراگراف میزاره{% endcomment %}
+                <button type="submit" class="btn btn-primary mt-3">Submit Ticket</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock content %}
