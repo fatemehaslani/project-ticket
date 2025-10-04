@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    index
+{% endblock %}
+
+{% block content %}
+    <div class="container-lg">
+
+    {% if messages %}
+    <div class="my-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card shadow">
+        <div class="card-body">
+           <div class="table-responsive">
+                <table class="table table-striped text-center align-middle">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Subject</th>
+                        <th>Tracking code</th>
+                        <th>Category</th>
+                        <th class="d-none d-lg-table-cell">Tags</th>
+                        <th>Max Reply data</th>
+                        <th>Priority</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets %}
+                    <tr>
+                        <td class="text-start">
+                            <a href="#" class="btn-link text-decoration-none">{{ ticket.subject }}</a>
+                        </td>
+                        <td>{{ ticket.tracking_code }}</td>
+                        <td>{{ ticket.category }}</td>
+                        <td class="d-none d-lg-table-cell">
+                            {% for tag in ticket.tags.all|slice:"2" %}
+                                <span class="badge bg-secondary">{{ tag.name }}</span>
+                                {% empty %}
+                                <span class="text-muted">-</span>
+                                {% endfor %}
+                        </td>
+                        <td>{{ ticket.max_reply_date|date:"Y/m/d " }}</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ ticket.get_priority_color }}">{{ ticket.priority }}</span>
+                        </td>
+                        <td>{{ ticket.created_by }}</td>
+                        <td>{{ ticket.created_at|date:"Y/m/d h:m" }}</td>
+                        <td>
+                            <a href="{% url 'tickets-update' ticket.id %}" class="text-decoration-none edit-confirm">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a href="{% url 'tickets-delete' ticket.id %}"
+                                class="text-decoration-none text-danger delete-confirm">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+
+                <tfoot></tfoot>
+            </table>
+           </div>
+        </div>
+    </div>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteBox = document.querySelectorAll('.delete-confirm');
+
+    deleteBox.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const confirmation = confirm('آیا از حذف این تیکت مطمئن هستید؟');
+
+            if (confirmation) {
+                window.location.href = this.href;
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const editBox = document.querySelectorAll('.edit-confirm');
+
+    editBox.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const editConfirmation = confirm('آیا از ویرایش این تیکت مطمئن هستید؟');
+
+            if (editConfirmation) {
+                window.location.href = this.href;
+            }
+        })
+    })
+})
+</script>
+
+{% endblock %}
