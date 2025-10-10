@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from tickets.forms import TicketForm
 from tickets.models import *
+from tickets.validators import validate
 
 
 # Create your views here.
@@ -34,12 +35,37 @@ def ticket_create(request):
 
     if request.method == "POST":
         form = TicketForm(request.POST)  # کاربر فرم پر کرده همش میشنه داخل field
-        if form.is_valid():
-            new_ticket = form.save(commit=False)
-            new_ticket.created_by_id = 1
-            new_ticket.save()
+
+
+        rules = {
+            "category": ["required"],
+            "priority": ["required", "in:Low,Medium,High"],
+            "subject": ["required", "min:5", "max:200"],
+            "age": ["required", "between:12,100"],
+            "email": ["required", "email"],
+            "description": ["required"],
+            "max_reply_data": ["required", "future_date"],
+        }
+
+        errors = validate(request.POST, rules)
+
+        if errors:
+            for field, error in errors.items():
+                form.add_error(field, error)
+        elif form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.created_by_id = 1
+            ticket.save()
+            form.save_m2m()
             messages.success(request, "Your ticket has been created successfully!")
             return redirect("tickets")
+
+        #if form.is_valid():
+            #new_ticket = form.save(commit=False)
+            #new_ticket.created_by_id = 1
+           # new_ticket.save()
+            #messages.success(request, "Your ticket has been created successfully!")
+           # return redirect("tickets")
     else:
         form = TicketForm()
     return render(request, "create_ticket.html", {"form": form, 'mode': mode})
