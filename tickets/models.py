@@ -62,6 +62,8 @@ class Ticket(TimestampedModel):
     )
     priority = models.CharField(max_length=15, choices=PRIORITY_CHOICES, default="low")
     subject = models.CharField(max_length=200)
+    email = models.EmailField(null=True, blank=True)
+    age = models.IntegerField(null=True, blank=True)
     description = models.TextField(blank=True)
     tags = models.ManyToManyField(Tag, related_name="tickets", blank=True)
     max_reply_date = models.DateTimeField(help_text="Max reply date")
