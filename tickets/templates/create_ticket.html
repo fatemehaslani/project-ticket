@@ -4,11 +4,29 @@
     <div class="container mt-5">
         <div class="card shadow-sm p-4">
             <h2 class="mb-4">Submit a Ticket</h2>
-
+{% comment %}
             <form method="post">
                 {% csrf_token %}
-                {{ form.as_p }}  {% comment %}هر کدوم از اینارو پاراگراف میزاره{% endcomment %}
-                <button type="submit" class="btn btn-primary mt-3">Submit Ticket</button>
+                {{ form.as_p }}  هر کدوم از اینارو پاراگراف میزاره
+
+            </form>{% endcomment %}
+            <form method="post" novalidate> {# disable HTML5 required #}
+                {% csrf_token %}
+                <div class="row">
+                    {% for field in form %}
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label"></label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                           <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                </div>
+            <button type="submit" class="btn btn-primary mt-3">Submit Ticket</button>
             </form>
         </div>
     </div>
