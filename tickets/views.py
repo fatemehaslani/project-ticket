@@ -1,9 +1,10 @@
-
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.urls import reverse
+from unicodedata import category
 
 from tickets.forms import TicketForm
 from tickets.models import *
@@ -12,7 +13,54 @@ from tickets.validators import validate
 
 # Create your views here.
 def index(request):
-    tickets = Ticket.objects.prefetch_related('tags').all()
+    search_query = request.GET.get("q", "").strip()
+    category_id = request.GET.get("category")
+    priority = request.GET.get("priority")
+    operator = request.GET.get("operator", "OR")
+    sort = request.GET.get("sort", "created_at")
+    direction = request.GET.get("dir", "desc")
+
+
+    tickets = Ticket.objects.prefetch_related('tags')
+
+
+    #Apply filters
+    #if search_query:
+        #tickets = tickets.filter(
+            #Q(subject__icontains=search_query)
+            #| Q(description__icontains=search_query)
+            #| Q(tracking_code__icontains=search_query)
+            #| Q(category__name__icontains=search_query)
+        #)
+
+    if search_query:
+        search_terms = search_query.split()
+        query = Q()
+
+        for term in search_terms:
+            term_condition = (
+                    Q(subject__icontains=term) |
+                    Q(description__icontains=term) |
+                    Q(tracking_code__icontains=term) |
+                    Q(category__name__icontains=term)
+            )
+
+            # استفاده از متد add برای ترکیب شرط‌ها
+            if operator == "AND":
+                query.add(term_condition, Q.AND)
+            else:
+                query.add(term_condition, Q.OR)
+
+        tickets = tickets.filter(query)
+
+    if category_id and category_id not in ["", "None"]:
+        tickets = tickets.filter(category_id=category_id)
+
+    if priority and priority not in ["", "None"]:
+        tickets = tickets.filter(priority=priority)
+
+
+
     request.session["page_route_name"] = "tickets"
 
     if 'mode' not in request.session:
@@ -21,7 +69,42 @@ def index(request):
     else:
         mode = request.session['mode']
 
-    return render(request, template_name='index.html', context={'tickets': tickets, 'mode': mode})
+    categories = Category.objects.filter(is_active=True)
+    priorities = Ticket._meta.get_field("priority").choices    #چون priority مدل نداره باید اینجوری بنویسیم مدل Ticket فیلد priority پیدا میکنیم
+
+    if sort:
+        tickets = tickets.order_by(sort)
+
+    if direction == "desc":
+        tickets = tickets.order_by(f"-{sort}")
+    else:
+        tickets = tickets.order_by(sort)
+
+    columns = [
+        ("subject", "Subject"),
+        ("tracking_code", "Tracking Code"),
+        ("category__name", "Category"),
+        ("tags", "Tags"),
+        ("created_at", "Created At"),
+        ("priority", "Priority"),
+        ("created_by", "Created By"),
+        ("max_reply_date", "Max Reply date"),
+        ("actions", "Actions"),
+    ]
+
+    context = {'tickets': tickets,
+               'mode': mode,
+               'search_query': search_query,
+               'selected_category': category_id if category_id not in ["", "None"] else "",
+               'selected_priority': priority if priority not in ["", "None"] else "",
+               'categories': categories,
+               'priorities': priorities,
+               'sort_by': sort,
+               "direction": direction,
+               "columns": columns,
+               }
+
+    return render(request, template_name='index.html', context=context)
 
 def ticket_create(request):
     request.session["page_route_name"] = "tickets-create"
