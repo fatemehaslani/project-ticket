@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% load highlight %}
 {% block title %}
     index
 {% endblock %}
@@ -19,13 +19,35 @@
     </div>
     {% endif %}
 
+    {% include "ticket-search.html" %}
+
     <div class="card shadow">
         <div class="card-body">
            <div class="table-responsive">
                 <table class="table table-striped text-center align-middle">
                 <thead class="table-secondary">
                     <tr>
-                        <th>Subject</th>
+
+                        {% for col, label in columns %}
+                            <th>
+                                <a href="?q={{ search_query }}&category={{ selected_category }}&priority={{ selected_priority }}&sort={{ col }}&dir={% if sort == col and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                                    {{ label }}
+                                    {% if sort == col %}
+                                        {% if direction == 'asc' %}
+                                            <i class="bi bi-arrow-up-short"></i>
+                                        {% else %}
+                                            <i class="bi bi-arrow-down-short"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                        {% endfor %}
+
+
+                        {% comment %}
+                        <th>
+                            <a href="?sort=subject&dir={% if direction == 'asc' %}desc{% else %}asc{% endif %}">Subject</a>
+                        </th>
                         <th>Tracking code</th>
                         <th>Category</th>
                         <th class="d-none d-lg-table-cell">Tags</th>
@@ -33,14 +55,14 @@
                         <th>Priority</th>
                         <th>Created By</th>
                         <th>Created At</th>
-                        <th>Actions</th>
+                        <th>Actions</th>{% endcomment %}
                     </tr>
                 </thead>
                 <tbody>
                 {% for ticket in tickets %}
                     <tr>
                         <td class="text-start">
-                            <a href="#" class="btn-link text-decoration-none">{{ ticket.subject }}</a>
+                            <a href="#" class="btn-link text-decoration-none">{{ ticket.subject|highlight:search_query }}</a>
                         </td>
                         <td>{{ ticket.tracking_code }}</td>
                         <td>{{ ticket.category }}</td>
@@ -51,12 +73,12 @@
                                 <span class="text-muted">-</span>
                                 {% endfor %}
                         </td>
-                        <td>{{ ticket.max_reply_date|date:"Y/m/d " }}</td>
+                        <td>{{ ticket.created_at|date:"Y/m/d " }}</td>
                         <td>
                             <span class="badge" style="background-color: {{ ticket.get_priority_color }}">{{ ticket.priority }}</span>
                         </td>
                         <td>{{ ticket.created_by }}</td>
-                        <td>{{ ticket.created_at|date:"Y/m/d h:m" }}</td>
+                        <td>{{ ticket.max_reply_date|date:"Y/m/d h:m" }}</td>
                         <td>
                             <a href="{% url 'tickets-update' ticket.id %}" class="text-decoration-none edit-confirm">
                                 <i class="bi bi-pencil-square"></i>
