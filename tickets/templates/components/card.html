@@ -1,0 +1,27 @@
+<div class="card {{ extra_class|default:'' }} {% if text_center %}text-center{% endif %}">
+    {% if header %}
+        <div class="card-header">{{ header }}</div>
+    {% endif %}
+
+    {% if image_top %}
+        <img src="{{ image_top }}" class="card-img-top" alt="{{ title|default:'Image' }}">
+    {% endif %}
+
+    <div class="card-body">
+        {% if title %}
+            <h5 class="card-title">{{ title }}</h5>
+        {% endif %}
+
+        <div class="card-text">
+            {{ content|safe }}
+        </div>
+    </div>
+
+    {% if image_bottom %}
+        <img src="{{ image_bottom }}" class="card-img-bottom" alt="{{ title|default:'Image' }}">
+    {% endif %}
+
+    {% if footer %}
+        <div class="card-footer">{{ footer }}</div>
+    {% endif %}
+</div>
