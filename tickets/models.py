@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.utils.timezone import now
 from django.conf import settings
 from django.utils.text import slugify, capfirst
@@ -86,6 +87,15 @@ class Ticket(TimestampedModel):
 
     def get_priority_color(self):
         return PRIORITY_COLORS.get(self.priority, "#6c757d")
+
+    def get_edit_url(self):
+        return reverse('tickets-update', args=[self.pk])
+
+    def get_absolute_url(self):
+        return reverse('tickets-detail', args=[self.pk])
+
+    def get_delete_url(self):
+        return reverse('tickets-delete', args=[self.pk])
 
     def __str__(self):
         return f"{self.tracking_code} {self.subject[:30]} ..."
