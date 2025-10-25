@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load highlight %}
+{% load button_tags %}
 {% block title %}
     index
 {% endblock %}
@@ -79,14 +80,18 @@
                         </td>
                         <td>{{ ticket.created_by }}</td>
                         <td>{{ ticket.max_reply_date|date:"Y/m/d h:m" }}</td>
-                        <td>
+                        <td>{% comment %}
                             <a href="{% url 'tickets-update' ticket.id %}" class="text-decoration-none edit-confirm">
                                 <i class="bi bi-pencil-square"></i>
-                            </a>
-                            <a href="{% url 'tickets-delete' ticket.id %}"
+                            </a>{% endcomment %}
+                           {% comment %} {% include 'components/button.html' with label="Edit" icon="bi-pencil-square"%}{% endcomment %}
+                            {% button label="" url=ticket.get_edit_url  icon="bi-pencil-square"%}
+                            {% button label="" url=ticket.get_delete_url icon="bi-trash" color="danger"%}
+
+                           {% comment %} <a href="{% url 'tickets-delete' ticket.id %}"
                                 class="text-decoration-none text-danger delete-confirm">
                                 <i class="bi bi-trash"></i>
-                            </a>
+                            </a>{% endcomment %}
                         </td>
                     </tr>
                 {% endfor %}
