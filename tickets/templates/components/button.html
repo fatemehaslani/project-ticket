@@ -1,0 +1,6 @@
+<a href="{{ url }}" class="btn btn-{{ size|default:"sm" }} btn-{{ color|default:'primary' }} d-inline-flex align-items-center">
+    {% if icon %}
+        <i class="bi {{ icon }} me-1"></i>
+    {% endif %}
+    {{ label }}
+</a>
