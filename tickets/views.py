@@ -61,13 +61,13 @@ def index(request):
 
 
 
-    request.session["page_route_name"] = "tickets"
+    #request.session["page_route_name"] = "tickets"
 
-    if 'mode' not in request.session:
-        request.session['mode'] = 'dark'
-        mode = request.session['mode']
-    else:
-        mode = request.session['mode']
+    #if 'mode' not in request.session:
+     #   request.session['mode'] = 'dark'
+      #  mode = request.session['mode']
+    #else:
+     #   mode = request.session['mode']
 
     categories = Category.objects.filter(is_active=True)
     priorities = Ticket._meta.get_field("priority").choices    #چون priority مدل نداره باید اینجوری بنویسیم مدل Ticket فیلد priority پیدا میکنیم
@@ -93,7 +93,6 @@ def index(request):
     ]
 
     context = {'tickets': tickets,
-               'mode': mode,
                'search_query': search_query,
                'selected_category': category_id if category_id not in ["", "None"] else "",
                'selected_priority': priority if priority not in ["", "None"] else "",
@@ -107,13 +106,13 @@ def index(request):
     return render(request, template_name='index.html', context=context)
 
 def ticket_create(request):
-    request.session["page_route_name"] = "tickets-create"
+    #request.session["page_route_name"] = "tickets-create"
 
-    if 'mode' not in request.session:
-        request.session['mode'] = 'dark'
-        mode = request.session['mode']
-    else:
-        mode = request.session['mode']
+    #if 'mode' not in request.session:
+     #   request.session['mode'] = 'dark'
+      #  mode = request.session['mode']
+    #else:
+     #   mode = request.session['mode']
 
 
     if request.method == "POST":
@@ -151,7 +150,7 @@ def ticket_create(request):
            # return redirect("tickets")
     else:
         form = TicketForm()
-    return render(request, "create_ticket.html", {"form": form, 'mode': mode})
+    return render(request, "create_ticket.html", {"form": form})
 
 def ticket_edit(request, id):
     ticket = get_object_or_404(Ticket, id=id)
@@ -183,15 +182,15 @@ def ticket_detail(request, id):
     return HttpResponse("ok")
 
 
-def color_mode(request):
-    if 'mode' in request.session:
-        if request.session.get('mode') == 'dark':
-            request.session['mode'] = 'light'
-        else:
-            request.session['mode'] = 'dark'
-    else:
-        request.session['mode'] = 'dark'
+#def color_mode(request):
+ #   if 'mode' in request.session:
+  #      if request.session.get('mode') == 'dark':
+   #         request.session['mode'] = 'light'
+    #    else:
+     #       request.session['mode'] = 'dark'
+    #else:
+     #   request.session['mode'] = 'dark'
 
-    page = request.session.get('page_route_name')
-    return HttpResponseRedirect(reverse(page))
+    #page = request.session.get('page_route_name')
+   # return HttpResponseRedirect(reverse(page))
 
