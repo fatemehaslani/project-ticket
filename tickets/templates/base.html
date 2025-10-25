@@ -10,7 +10,7 @@
     <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'vendor/bootstrap-icon/bootstrap-icons.min.css' %}" rel="stylesheet">
 </head>
-<body data-bs-theme="{{ mode }}">
+<body data-bs-theme="">
 
 {% include 'nav.html' %}
 
@@ -20,6 +20,34 @@
 
 <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
+{% block js %}
+{% endblock %}
+
+<script>
+    const colorModeElm = document.querySelector("#color-mode")
+    const bodyElm = document.body
+
+    document.addEventListener("DOMContentLoaded", function (){
+        if( localStorage.getItem('default-color-theme')) {
+            const theme = localStorage.getItem('default-color-theme')
+            bodyElm.setAttribute("data-bs-theme", theme)
+        } else {
+            bodyElm.setAttribute("data-bs-theme", "dark")
+        }
+    })
+  colorModeElm.addEventListener("click", function (){
+      if (bodyElm.getAttribute("data-bs-theme") === "light") {
+        bodyElm.setAttribute("data-bs-theme", "dark")
+        localStorage.setItem('default-color-theme', "dark")
+    } else {
+        document.body.setAttribute("data-bs-theme", "light")
+        localStorage.setItem('default-color-theme', "light")
+    }
+  })
+
+
+
+</script>
 
 </body>
 </html>
