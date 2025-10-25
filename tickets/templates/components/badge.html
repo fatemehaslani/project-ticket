@@ -1,0 +1,6 @@
+<span class="badge bg-{{ color|default:'primary' }} {% if rounded %}rounded-pill{% endif %} {{ extra_class|default:'' }}">
+        {% if icon %}
+            <i class="bi {{ icon }} {% if text %}me-1{% endif %}"></i>
+        {% endif %}
+        {{ text }}
+</span>
