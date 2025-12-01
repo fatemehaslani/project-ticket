@@ -31,12 +31,19 @@ class NamedSlugModel(TimestampedModel):
             return capfirst(self.name)
 
 
+
+class CategoryQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True)
+
+
 class Category(NamedSlugModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "categories"
 
+    objects = CategoryQuerySet.as_manager()
 
 class Tag(NamedSlugModel):
     pass
@@ -44,6 +51,22 @@ class Tag(NamedSlugModel):
     class Meta:
         db_table = "tags"
 
+
+class TicketsQuerySet(models.QuerySet):
+    def with_priority(self, priority):
+        return self.filter(priority=priority)
+
+    def is_close(self):
+        return self.filter(closed_at__isnull=False)
+
+    def is_open(self):
+        return self.filter(closed_at__isnull=True)
+
+    def is_expired(self):
+        pass
+
+    def assigned_by(self, user):
+        pass
 
 class Ticket(TimestampedModel):
     category = models.ForeignKey(
@@ -97,9 +120,14 @@ class Ticket(TimestampedModel):
     def get_delete_url(self):
         return reverse('tickets-delete', args=[self.pk])
 
+    def get_ticket_url(self):
+        return reverse('tickets', args=[self.pk])
+
     def __str__(self):
         return f"{self.tracking_code} {self.subject[:30]} ..."
 
+
+    objects = TicketsQuerySet.as_manager()
 
 class Assignment(TimestampedModel):
     assigned_ticket = models.ForeignKey(
@@ -128,3 +156,28 @@ class Assignment(TimestampedModel):
 
     def __str__(self):
         return f'{self.assigned_ticket.subject} assigned to {self.assignee.username}'
+
+class SearchLog(models.Model):
+    search_subject = models.CharField(max_length=1024)
+    search_category = models.CharField(max_length=200)
+    search_priority = models.CharField(max_length=15)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="search_logs",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        default=None,
+        editable=False,
+    )
+
+    class Meta:
+        db_table = "search_logs"
+
+    def __str__(self):
+        output = f'at {self.created_at}'
+        if self.user is not None:
+            return output + f' by {self.user.username}'
+        else:
+            return output + ' by guest'
