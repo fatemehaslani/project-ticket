@@ -68,8 +68,8 @@
                         <td>{{ ticket.tracking_code }}</td>
                         <td>{{ ticket.category }}</td>
                         <td class="d-none d-lg-table-cell">
-                            {% for tag in ticket.tags.all|slice:"2" %}
                                 <span class="badge bg-secondary">{{ tag.name }}</span>
+                           {% for tag in ticket.tags.all|slice:"2" %}
                                 {% empty %}
                                 <span class="text-muted">-</span>
                                 {% endfor %}
