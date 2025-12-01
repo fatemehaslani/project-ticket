@@ -1,65 +1,134 @@
+from datetime import timedelta
+
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.template.context_processors import request
 from django.urls import reverse
+from django.utils import timezone
 from unicodedata import category
+from django.db.models import Count
 
 from tickets.forms import TicketForm
 from tickets.models import *
 from tickets.validators import validate
 
 
+def dashboard(request):
+    week_ago = timezone.now() - timedelta(days=7)
+    weekly_tickets = Ticket.objects.filter(created_at__gte=week_ago).count()
+    # آخرین تیکت‌ها
+    recent_tickets = Ticket.objects.select_related('category').order_by('-created_at')[:5]
+
+    context = {
+        'total_tickets': Ticket.objects.all().count(),
+        'low_tickets': Ticket.objects.with_priority('low').count(),
+        'middle_tickets': Ticket.objects.with_priority('middle').count(),
+        'high_tickets': Ticket.objects.with_priority('high').count(),
+        'closed_tickets': Ticket.objects.is_close().count(),
+        'open_tickets': Ticket.objects.is_open().count(),
+        #'assigned_by_auth_user': Ticket.objects.assigned_by(request.user).count(),
+
+        'weekly_tickets': weekly_tickets,
+        'recent_tickets': recent_tickets,
+
+        #'category_stats': Ticket.objects.values(
+         #   'category__name'  # اگر رابطه ForeignKey به مدل Category دارید
+        #).annotate(
+         #   count=Count('id')
+        #).order_by('-count')
+        'category_stats': Ticket.objects.values(
+            'category__id',
+            'category__name',
+            'category__slug'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count'),
+
+        'categories_count': Category.objects.count(),
+    }
+
+    return render(request, 'dashboard.html', context)
+
+
 # Create your views here.
 def index(request):
     search_query = request.GET.get("q", "").strip()
-    category_id = request.GET.get("category")
-    priority = request.GET.get("priority")
+    category_id = request.GET.get("category", "").strip()
+    priority = request.GET.get("priority", "").strip()
     operator = request.GET.get("operator", "OR")
     sort = request.GET.get("sort", "created_at")
     direction = request.GET.get("dir", "desc")
+    with_close = request.GET.get("with_close", None)
 
+    is_user_search = False
+    new_log = None
 
-    tickets = Ticket.objects.prefetch_related('tags')
+    if search_query or category_id or priority:
+        is_user_search = True
+        new_log = SearchLog()
+
+    #if with_close == "on":
+      #  tickets = Ticket.objects
+    #else:
+        #tickets = Ticket.objects.is_open()
+
+    tickets = Ticket.objects if with_close == "on" else Ticket.objects.is_open()
+
+    tickets = tickets.prefetch_related('tags')
 
 
     #Apply filters
-    #if search_query:
-        #tickets = tickets.filter(
-            #Q(subject__icontains=search_query)
-            #| Q(description__icontains=search_query)
-            #| Q(tracking_code__icontains=search_query)
-            #| Q(category__name__icontains=search_query)
-        #)
-
     if search_query:
-        search_terms = search_query.split()
-        query = Q()
+        if new_log:
+            new_log.search_subject = search_query
+        tickets = tickets.filter(
+            Q(subject__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(tracking_code__icontains=search_query)
+            | Q(category__name__icontains=search_query)
+        )
 
-        for term in search_terms:
-            term_condition = (
-                    Q(subject__icontains=term) |
-                    Q(description__icontains=term) |
-                    Q(tracking_code__icontains=term) |
-                    Q(category__name__icontains=term)
-            )
+    #if search_query:
+     #   search_terms = search_query.split()
+      #  query = Q()
+
+       # for term in search_terms:
+        #    term_condition = (
+         #           Q(subject__icontains=term) |
+          #          Q(description__icontains=term) |
+           #         Q(tracking_code__icontains=term) |
+            #        Q(category__name__icontains=term)
+            #)
 
             # استفاده از متد add برای ترکیب شرط‌ها
-            if operator == "AND":
-                query.add(term_condition, Q.AND)
-            else:
-                query.add(term_condition, Q.OR)
+            #if operator == "AND":
+             #   query.add(term_condition, Q.AND)
+            #else:
+             #   query.add(term_condition, Q.OR)
 
-        tickets = tickets.filter(query)
+        #tickets = tickets.filter(query)
 
-    if category_id and category_id not in ["", "None"]:
-        tickets = tickets.filter(category_id=category_id)
+    if category_id:
+        try:
+            category = Category.objects.get(id=category_id)
+            if new_log:
+                new_log.search_category = category.name
+            request.session['search_category'] = category_id
+            tickets = tickets.filter(category_id=category_id)
+        except Category.DoesNotExist:
+            pass
+    elif request.session.get("search_category"):
+        session_category = request.session.get("search_category")
+        if session_category:
+            tickets = tickets.filter(category_id=session_category)
 
-    if priority and priority not in ["", "None"]:
-        tickets = tickets.filter(priority=priority)
-
-
+    if priority:
+        if new_log:
+            new_log.search_priority = priority
+        tickets = tickets.with_priority(priority)
 
     #request.session["page_route_name"] = "tickets"
 
@@ -69,16 +138,15 @@ def index(request):
     #else:
      #   mode = request.session['mode']
 
-    categories = Category.objects.filter(is_active=True)
+    categories = Category.objects.active()
     priorities = Ticket._meta.get_field("priority").choices    #چون priority مدل نداره باید اینجوری بنویسیم مدل Ticket فیلد priority پیدا میکنیم
 
     if sort:
-        tickets = tickets.order_by(sort)
-
-    if direction == "desc":
-        tickets = tickets.order_by(f"-{sort}")
-    else:
-        tickets = tickets.order_by(sort)
+        if direction == "desc":
+            sort_field = f"-{sort}"
+        else:
+            sort_field = sort
+        tickets = tickets.order_by(sort_field)
 
     columns = [
         ("subject", "Subject"),
@@ -92,16 +160,25 @@ def index(request):
         ("actions", "Actions"),
     ]
 
+    selected_category = category_id if category_id else request.session.get("search_category", "")
+
+
     context = {'tickets': tickets,
                'search_query': search_query,
-               'selected_category': category_id if category_id not in ["", "None"] else "",
+               'selected_category': selected_category,
                'selected_priority': priority if priority not in ["", "None"] else "",
                'categories': categories,
                'priorities': priorities,
+               'with_close': with_close,
                'sort_by': sort,
                "direction": direction,
                "columns": columns,
                }
+
+    if is_user_search and new_log:
+        if request.user.is_authenticated:
+            new_log.user = request.user
+        new_log.save()
 
     return render(request, template_name='index.html', context=context)
 
@@ -194,3 +271,6 @@ def ticket_detail(request, id):
     #page = request.session.get('page_route_name')
    # return HttpResponseRedirect(reverse(page))
 
+def tickets_clear(request):
+    request.session['search_category'] = None
+    return redirect("tickets")
