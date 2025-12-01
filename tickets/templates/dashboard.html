@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% load widget %}
+
+{% block content %}
+
+   {% comment %} <section class="container my-4">
+
+        <div class="row">
+            <div class="col-md-4">
+                {% widget title="Total Ticket count" color="success" count=total_tickets icon="user" url="tickets" extra_class="shadow" %}
+            </div>
+            <div class="col-md-4 mb-3">
+                {% widget title="Low Ticket count" color="warning" count=low_tickets icon="user" url="tickets?priority=low" extra_class="shadow" %}
+            </div>
+            <div class="col-md-4 mb-3">
+                {% widget title="Middle Ticket count" color="danger" count=middle_tickets icon="user" url="tickets" extra_class="shadow" %}
+            </div>
+            <div class="col-md-4 mb-3">
+                {% widget title="Low Ticket count" color="warning" count=low_tickets icon="user" url="tickets" extra_class="shadow" %}
+            </div>
+
+
+        </div>
+
+        <div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h5>آمار بر اساس دسته‌بندی</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for cat in category_stats %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ cat.category__name|default:"بدون دسته‌بندی" }}</h6>
+                                <p class="card-text badge bg-warning rounded-circle h4">{{ cat.count }}</p>
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted">تیکت</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <p class="text-center text-muted">هیچ تیکتی در دسته‌بندی‌ها وجود ندارد.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </section>{% endcomment %}
+
+
+<div class="container-fluid py-4">
+
+    <!-- ردیف اول: آمار کلی -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                کل تیکت‌ها</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tickets }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                تیکت‌های باز</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ open_tickets }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-lock-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                تیکت‌های بسته</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ closed_tickets }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-lock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                دسته‌بندی‌ها</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ categories_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ردیف دوم: نمودارها -->
+    <div class="row mb-4">
+        <!-- نمودار دایره‌ای دسته‌بندی‌ها -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">توزیع تیکت‌ها بر اساس دسته‌بندی</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نمودار اولویت‌ها -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">تیکت‌ها بر اساس اولویت</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ردیف سوم: جدول دسته‌بندی‌ها -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">جزئیات دسته‌بندی‌ها</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>دسته‌بندی</th>
+                                    <th>تعداد تیکت</th>
+                                    <th>درصد</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in category_stats %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center ">
+                                            {% if stat.category__color %}
+                                            <div class="mr-2" style="width: 20px; height: 20px; background-color: {{ stat.category__color }}; border-radius: 4px;"></div>
+                                            {% endif %}
+                                            <span>{{ stat.category__name|default:"بدون دسته‌بندی" }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-primary badge-pill p-2 text-dark">{{ stat.count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% cycle 'bg-primary' 'bg-success' 'bg-info' 'bg-warning' 'bg-danger' %}"
+                                                 role="progressbar"
+                                                 style="width: {% widthratio stat.count total_tickets 100 %}%;"
+                                                 aria-valuenow="{% widthratio stat.count total_tickets 100 %}"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                                {% widthratio stat.count total_tickets 100 %}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if stat.count > 10 %}
+                                        <span class="badge badge-danger text-dark">پرترافیک</span>
+                                        {% elif stat.count > 5 %}
+                                        <span class="badge badge-warning text-dark">متوسط</span>
+                                        {% else %}
+                                        <span class="badge badge-success text-dark">کم</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">هیچ تیکتی در دسته‌بندی‌ها وجود ندارد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript برای نمودارها -->
+<script>
+// داده‌های دسته‌بندی‌ها از Django به JavaScript
+const categoryData = {
+    labels: [
+        {% for stat in category_stats %}
+        "{{ stat.category__name|default:'بدون دسته' }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    datasets: [{
+        data: [
+            {% for stat in category_stats %}
+            {{ stat.count }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        backgroundColor: [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+            '#5a5c69', '#6f42c1', '#20c9a6', '#fd7e14', '#e83e8c'
+        ],
+        hoverBackgroundColor: [
+            '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617',
+            '#3a3b45', '#523d8f', '#17a98c', '#d5670c', '#c2176f'
+        ],
+        hoverBorderColor: "rgba(234, 236, 244, 1)",
+    }]
+};
+
+// داده‌های اولویت‌ها
+const priorityData = {
+    labels: ["کم", "متوسط", "بالا"],
+    datasets: [{
+        label: "تعداد تیکت",
+        backgroundColor: "#4e73df",
+        hoverBackgroundColor: "#2e59d9",
+        borderColor: "#4e73df",
+        data: [{{ low_tickets }}, {{ middle_tickets }}, {{ high_tickets }}],
+    }]
+};
+
+// نمودار دایره‌ای دسته‌بندی‌ها
+const categoryChart = new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: categoryData,
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var label = data.labels[tooltipItem.index] || '';
+                    var value = data.datasets[0].data[tooltipItem.index];
+                    var total = {{ total_tickets }};
+                    var percentage = Math.round((value / total) * 100);
+                    return label + ': ' + value + ' (' + percentage + '%)';
+                }
+            }
+        },
+        legend: {
+            display: true,
+            position: 'bottom',
+            rtl: true,
+            labels: {
+                fontFamily: 'Vazir, sans-serif',
+                padding: 20,
+                usePointStyle: true
+            }
+        },
+        cutoutPercentage: 70,
+    },
+});
+
+// نمودار میله‌ای اولویت‌ها
+const priorityChart = new Chart(document.getElementById('priorityChart'), {
+    type: 'bar',
+    data: priorityData,
+    options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    fontFamily: 'Vazir, sans-serif'
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    fontFamily: 'Vazir, sans-serif',
+                    padding: 10
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }]
+        },
+        legend: {
+            display: false
+        },
+        tooltips: {
+            titleFontFamily: 'Vazir, sans-serif',
+            bodyFontFamily: 'Vazir, sans-serif',
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+        }
+    }
+});
+</script>
+
+<!-- اضافه کردن فونت و آیکون -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Vazir', sans-serif;
+    background-color: #f8f9fc;
+}
+.card {
+    border-radius: 0.5rem;
+    border: 0;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e3e6f0;
+}
+.badge-pill {
+    border-radius: 10rem;
+}
+.table th {
+    border-top: 0;
+}
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-bar {
+    font-size: 12px;
+    line-height: 20px;
+}
+/* انیمیشن برای کارت‌ها */
+.card {
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+}
+/* استایل RTL */
+.text-right {
+    text-align: right;
+}
+.mr-2 {
+    margin-right: 0.5rem;
+}
+</style>
+
+
+{% endblock %}
+
