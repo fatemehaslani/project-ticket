@@ -1,16 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container mt-5">
+{% comment %}    <div class="container mt-5">
         <div class="card shadow-sm p-4">
             <h2 class="mb-4">Submit a Ticket</h2>
-{% comment %}
             <form method="post">
                 {% csrf_token %}
                 {{ form.as_p }}  هر کدوم از اینارو پاراگراف میزاره
 
-            </form>{% endcomment %}
-            <form method="post" novalidate> {# disable HTML5 required #}
+            </form>
+            <form method="post" novalidate enctype="multipart/form-data"> {# disable HTML5 required #}
                 {% csrf_token %}
                 <div class="row">
                     {% for field in form %}
@@ -26,9 +25,367 @@
                     </div>
                 {% endfor %}
                 </div>
+
+            <h5>Existing Attachments</h5>
+        <ul class="list-group mb-3">
+            {% for a in attachments %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{{ a.file.url }}" target="_blank">{{ a.file.name }}</a>
+
+            <a href="{% url 'attachment_delete' a.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this attachment?');">
+                Delete
+            </a>
+
+            </li>
+            {% empty %}
+            <p>No attachments</p>
+            {% endfor %}
+        </ul>
+
             <button type="submit" class="btn btn-primary mt-3">Submit Ticket</button>
             </form>
         </div>
+    </div>{% endcomment %}
+
+    <div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-success text-white py-3">
+            <h2 class="h4 mb-0">
+                <i class="bi bi-ticket-detailed me-2"></i>Submit a New Ticket
+            </h2>
+            <p class="mb-0 small opacity-75">Please fill out the form below to submit your support request</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <form method="post" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- نمایش خطاهای کلی فرم -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="row g-4">
+                    {% for field in form %}
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ field }}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                            <div class="invalid-feedback d-block">
+                                <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- بخش فایل‌های پیوست شده -->
+                <div class="card mt-4 shadow-sm">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-paperclip me-2"></i>Attachments
+            </h5>
+            <span class="badge bg-primary rounded-pill">{{ attachments.count }} files</span>
+        </div>
     </div>
+
+    <div class="card-body">
+        {% if attachments %}
+            <!-- Gallery for Images -->
+            <div class="mb-4">
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                    <i class="bi bi-images me-1"></i> Images & Videos
+                </h6>
+                <div class="row g-3">
+                    {% for a in attachments %}
+                        {% if a.file.name|lower|slice:"-4:" in ".jpg,.jpeg,.png,.gif,.bmp,.webp" or a.file.name|lower|slice:"-5:" in ".jpeg,.webp" %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                            <div class="border rounded overflow-hidden position-relative">
+                                <a href="{{ a.file.url }}" data-bs-toggle="lightbox" data-gallery="ticket-gallery">
+                                    <img src="{{ a.file.url }}"
+                                         class="img-fluid w-100"
+                                         style="height: 120px; object-fit: cover;"
+                                         alt="{{ a.file.name }}"
+                                         loading="lazy">
+                                </a>
+                                <div class="p-2 bg-white">
+                                    <small class="d-block text-truncate" title="{{ a.file.name }}">
+                                        {{ a.file.name|truncatechars:15 }}
+                                    </small>
+                                    <div class="btn-group w-100 mt-1" role="group">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                onclick="window.open('{{ a.file.url }}', '_blank')">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success"
+                                                onclick="downloadFile('{{ a.file.url }}', '{{ a.file.name }}')">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal{{ a.id }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for a in attachments %}
+                        {% if a.file.name|lower|slice:"-4:" in ".mp4,.avi,.mov,.mkv,.webm" %}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-camera-video text-primary display-6 mb-3"></i>
+                                    <h6 class="card-title text-truncate">{{ a.file.name }}</h6>
+                                    <p class="card-text small text-muted">
+                                        {{ a.file.size|filesizeformat }}
+                                    </p>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ a.file.url }}"
+                                           class="btn btn-primary btn-sm"
+                                           target="_blank">
+                                            <i class="bi bi-play-circle me-1"></i> Play
+                                        </a>
+                                        <a href="{{ a.file.url }}"
+                                           class="btn btn-success btn-sm"
+                                           download>
+                                            <i class="bi bi-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Table for Documents -->
+            <div class="mt-4">
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                    <i class="bi bi-files me-1"></i> Documents & Other Files
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        {% comment %}<thead class="table-light">
+                            <tr>
+                                <th width="50">Type</th>
+                                <th>File Name</th>
+                                <th width="100">Size</th>
+                                <th width="150">Actions</th>
+                            </tr>
+                        </thead>{% endcomment %}
+                        <tbody>
+                            {% for a in attachments %}
+                                {% if not a.file.name|lower|slice:"-4:" in ".jpg,.jpeg,.png,.gif,.bmp,.webp,.mp4,.avi,.mov,.mkv,.webm" %}
+                                <tr>
+                                    <td class="text-center">
+                                        {% with ext=a.file.name|lower|slice:"-4:" %}
+                                            {% if ext == ".pdf" %}
+                                                <i class="bi bi-file-pdf-fill text-danger fs-4"></i>
+                                            {% elif ext in ".doc,.docx" %}
+                                                <i class="bi bi-file-word-fill text-primary fs-4"></i>
+                                            {% elif ext in ".xls,.xlsx" %}
+                                                <i class="bi bi-file-excel-fill text-success fs-4"></i>
+                                            {% elif ext in ".ppt,.pptx" %}
+                                                <i class="bi bi-file-ppt-fill text-warning fs-4"></i>
+                                            {% elif ext in ".zip,.rar,.7z" %}
+                                                <i class="bi bi-file-zip-fill text-secondary fs-4"></i>
+                                            {% elif ext in ".mp3,.wav,.ogg" %}
+                                                <i class="bi bi-file-music-fill text-info fs-4"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-earmark-fill text-dark fs-4"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ a.file.name }}</strong><br>
+                                            <small class="text-muted">
+                                                Uploaded: {{ a.created_at|date:"d M Y, H:i" }}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ a.file.size|filesizeformat }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ a.file.url }}"
+                                               class="btn btn-outline-primary btn-sm"
+                                               target="_blank">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ a.file.url }}"
+                                               class="btn btn-outline-success btn-sm"
+                                               download>
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ a.id }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Delete Modal for each file -->
+                                <div class="modal fade" id="deleteModal{{ a.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete <strong>{{ a.file.name }}</strong>?</p>
+                                                <p class="text-muted small">This action cannot be undone.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <a href="{% url 'attachment_delete' a.pk %}"
+                                                   class="btn btn-danger">Delete</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="bi bi-folder-x text-muted display-1"></i>
+                <h5 class="mt-3 text-muted">No Attachments</h5>
+                <p class="text-muted">No files have been attached to this ticket yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card-footer bg-light">
+        <div class="row">
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Supported formats: Images, PDF, Documents, Videos, Audio, Archives
+                </small>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    Total size:
+                    <strong>{{ total_size|filesizeformat }}</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- دکمه‌های فرم -->
+                <div class="mt-5 d-flex justify-content-between">
+                    <a href="#" class="btn btn-outline-warning" onclick="history.back()">
+                        <i class="bi bi-arrow-left me-1"></i> Go Back
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-send me-1"></i> Submit Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-footer bg-light py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check me-1"></i>Your information is secure
+                    </small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>We typically respond within 24 hours
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Initialize lightbox for images
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lightbox !== 'undefined') {
+            lightbox.option({
+                'resizeDuration': 200,
+                'wrapAround': true,
+                'albumLabel': 'Image %1 of %2'
+            });
+        }
+    });
+</script>
+
+<!-- Optional: Add lightbox CSS if not included -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css"> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script> -->
+
+<style>
+    .card {
+        border: none;
+    }
+    .table th {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .btn-group .btn {
+        border-radius: 0.25rem !important;
+    }
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.25rem !important;
+        border-bottom-left-radius: 0.25rem !important;
+    }
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.25rem !important;
+        border-bottom-right-radius: 0.25rem !important;
+    }
+</style>
 
 {% endblock content %}
