@@ -37,5 +37,5 @@ def button(label,
         if confirm:
             confirm_js = f"return confirm({format_html('{}', esc(confirm))});"
             btn_type = esc(type) if type else 'submit'
-            return format_html('<button type="{}" class="{}"{}</button>',
+            return format_html('<button type="{}" class="{}"{}>{}</button>',
                                btn_type, cls, confirm_attr, mark_safe(icon_html + esc(label)))

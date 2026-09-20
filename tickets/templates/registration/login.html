@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+    {% comment %}<div class="content mt-5" style="">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title mb-4 text-center">Login</h4>
+                {% if form.errors %}
+                    <div class="alert alert-danger">Invalid username or password.</div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        {{ form.username|add_class:"form-control" }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        {{ form.password|add_class:"form-control" }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>{% endcomment %}
+
+
+<div class="auth-wrapper" dir="rtl" lang="fa">
+    <div class="auth-card shadow-lg">
+
+        <!-- ستون چپ: تصویر / برند -->
+        <div class="auth-visual d-none d-lg-flex">
+            <div class="visual-content">
+                <div class="brand-icon mb-4">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h2 class="fw-bold text-white mb-3">خوش آمدید</h2>
+                <p class="text-white-50 mb-0">
+                    برای دسترسی به داشبورد و مدیریت همه‌چیز در یک‌جا، وارد شوید.
+                </p>
+
+                <div class="visual-footer mt-5">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>احراز هویت امن</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>سریع و مطمئن</span>
+                    </div>
+                </div>
+            </div>
+            <div class="visual-blob"></div>
+        </div>
+
+        <!-- ستون راست: فرم -->
+        <div class="auth-form">
+            <div class="text-center d-lg-none mb-4">
+                <div class="mobile-icon mx-auto">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">ورود به حساب</h3>
+                <p class="text-muted small mb-0">اطلاعات حساب خود را وارد کنید</p>
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-center py-2 border-0 rounded-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div class="small">نام کاربری یا رمز عبور اشتباه است.</div>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">نام کاربری</label>
+                    <div class="input-group modern-input">
+                        <span class="input-group-text">
+                            <i class="bi bi-person"></i>
+                        </span>
+                        {{ form.username|add_class:"form-control" }}
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">رمز عبور</label>
+                    <div class="input-group modern-input">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        {{ form.password|add_class:"form-control" }}
+                        <span class="input-group-text toggle-pass" onclick="togglePassword(this)">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="remember">
+                        <label class="form-check-label small text-muted" for="remember">
+                            مرا به خاطر بسپار
+                        </label>
+                    </div>
+                    <a href="#" class="small text-decoration-none fw-semibold link-primary-custom">
+                        فراموشی رمز عبور؟
+                    </a>
+                </div>
+
+                <button type="submit" class="btn btn-gradient w-100 py-2 fw-semibold">
+                    ورود <i class="bi bi-arrow-left ms-2"></i>
+                </button>
+            </form>
+
+            <p class="text-center small text-muted mt-4 mb-0">
+                حساب کاربری ندارید؟
+                <a href="#" class="fw-semibold text-decoration-none link-primary-custom">ثبت‌نام کنید</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* ===== فونت فارسی ===== */
+    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+    .auth-wrapper,
+    .auth-wrapper * {
+        font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+    }
+
+    :root {
+        --brand-1: #6366f1;
+        --brand-2: #8b5cf6;
+        --brand-3: #4f46e5;
+    }
+
+    /* ===== Wrapper ===== */
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: radial-gradient(circle at 20% 20%, #e0e7ff 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, #ede9fe 0%, transparent 50%),
+                    #f8fafc;
+    }
+
+    /* ===== Card ===== */
+    .auth-card {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 460px;
+        background: #fff;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    @media (min-width: 992px) {
+        .auth-card {
+            grid-template-columns: 1fr 1fr;
+            max-width: 900px;
+        }
+    }
+
+    /* ===== Visual ===== */
+    .auth-visual {
+        position: relative;
+        background: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%);
+        padding: 3rem;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }
+    .visual-content { position: relative; z-index: 2; }
+    .brand-icon {
+        width: 64px; height: 64px;
+        background: rgba(255,255,255,.15);
+        border-radius: 18px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem; color: #fff;
+        backdrop-filter: blur(10px);
+    }
+    .visual-footer { font-size: .85rem; color: rgba(255,255,255,.85); }
+    .visual-footer i { color: #a7f3d0; }
+
+    .visual-blob {
+        position: absolute;
+        width: 320px; height: 320px;
+        background: rgba(255,255,255,.12);
+        border-radius: 50%;
+        bottom: -120px; left: -100px;  /* 👈 چون RTL شده، چپ */
+        filter: blur(2px);
+    }
+    .visual-blob::after {
+        content: '';
+        position: absolute;
+        width: 180px; height: 180px;
+        background: rgba(255,255,255,.10);
+        border-radius: 50%;
+        top: -200px; right: -160px;   /* 👈 راست */
+    }
+
+    /* ===== Form ===== */
+    .auth-form {
+        padding: 2.5rem;
+    }
+    @media (min-width: 992px) {
+        .auth-form { padding: 3rem 2.5rem; }
+    }
+
+    .mobile-icon {
+        width: 60px; height: 60px;
+        background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.6rem;
+    }
+
+    /* ===== Inputs ===== */
+    .modern-input .input-group-text {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #94a3b8;
+    }
+    /* در RTL، فرزند اول سمت راست قرار می‌گیره */
+    .modern-input .input-group-text:first-child {
+        border-left: none;
+        border-right: 1px solid #e2e8f0;
+        border-radius: 0 12px 12px 0;
+    }
+    .modern-input .input-group-text:last-child {
+        border-right: none;
+        border-left: 1px solid #e2e8f0;
+        border-radius: 12px 0 0 12px;
+    }
+    .modern-input .form-control {
+        border: 1px solid #e2e8f0;
+        padding: .7rem .9rem;
+        background: #f8fafc;
+        text-align: right;
+    }
+    .modern-input .form-control:focus {
+        box-shadow: none;
+        background: #fff;
+        border-color: var(--brand-1);
+    }
+    .modern-input:focus-within .input-group-text {
+        border-color: var(--brand-1);
+        background: #fff;
+        color: var(--brand-1);
+    }
+    .toggle-pass { cursor: pointer; }
+
+    /* ===== Checkbox ===== */
+    .form-check {
+        padding-right: 1.5em;   /* 👈 در RTL */
+        padding-left: 0;
+    }
+    .form-check .form-check-input {
+        float: right;            /* 👈 در RTL */
+        margin-right: -1.5em;
+        margin-left: 0;
+    }
+    .form-check-input:checked {
+        background-color: var(--brand-1);
+        border-color: var(--brand-1);
+    }
+
+    /* ===== Button ===== */
+    .btn-gradient {
+        background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        transition: all .3s ease;
+    }
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(99, 102, 241, .35);
+        color: #fff;
+    }
+    .btn-gradient i {
+        transition: transform .3s ease;
+    }
+    .btn-gradient:hover i {
+        transform: translateX(-4px);  /* 👈 در RTL به چپ */
+    }
+
+    .link-primary-custom {
+        color: var(--brand-1);
+    }
+    .link-primary-custom:hover {
+        color: var(--brand-3);
+    }
+</style>
+
+<script>
+    function togglePassword(el) {
+        const input = el.parentElement.querySelector('input');
+        const icon = el.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+</script>
+
+
+{% endblock %}

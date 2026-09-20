@@ -54,170 +54,265 @@
 </div>
     </section>{% endcomment %}
 
-
 <div class="container-fluid py-4">
+    <!-- Header with welcome message and role -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">
+                <i class="bi bi-speedometer2 text-primary me-2"></i>
+                داشبورد
+            </h2>
+            <p class="text-muted">
+                <i class="bi bi-person-circle me-1"></i>
+                {{ request.user.get_full_name|default:request.user.username }}
+                <span class="badge bg-info ms-2">{{ request.session.role }}</span>
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-light text-dark p-3">
+                <i class="bi bi-calendar3 text-primary me-2"></i>
+                {{ now|date:"l d F Y" }}
+            </span>
+        </div>
+    </div>
 
-    <!-- ردیف اول: آمار کلی -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Tickets -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                کل تیکت‌ها</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tickets }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted text-uppercase small fw-bold">کل تیکت‌ها</span>
+                            <h3 class="fw-bold mt-2 mb-0">{{ total_tickets }}</h3>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-ticket-detailed fs-1 text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-success">
+                            <i class="bi bi-graph-up"></i> هفتگی: {{ weekly_tickets }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Tickets -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted text-uppercase small fw-bold">تیکت‌های باز</span>
+                            <h3 class="fw-bold mt-2 mb-0">{{ open_tickets }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-envelope-open fs-1 text-success"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success"
+                                 role="progressbar"
+                                 style="width: {% widthratio open_tickets total_tickets 100 %}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+        <!-- Closed Tickets -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                تیکت‌های باز</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ open_tickets }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted text-uppercase small fw-bold">تیکت‌های بسته</span>
+                            <h3 class="fw-bold mt-2 mb-0">{{ closed_tickets }}</h3>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-lock-open fa-2x text-gray-300"></i>
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-envelope-check fs-1 text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger"
+                                 role="progressbar"
+                                 style="width: {% widthratio closed_tickets total_tickets 100 %}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
+        <!-- Priority Alert -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 {% if high_priority_unclosed > 0 %}border-danger{% endif %}">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                تیکت‌های بسته</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ closed_tickets }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted text-uppercase small fw-bold">اولویت بالا (باز)</span>
+                            <h3 class="fw-bold mt-2 mb-0 {% if high_priority_unclosed > 0 %}text-danger{% endif %}">
+                                {{ high_priority_unclosed }}
+                            </h3>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-lock fa-2x text-gray-300"></i>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                دسته‌بندی‌ها</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ categories_count }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-folder fa-2x text-gray-300"></i>
-                        </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-flag-fill text-danger me-1"></i>
+                            نیاز به توجه فوری
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ردیف دوم: نمودارها -->
-    <div class="row mb-4">
-        <!-- نمودار دایره‌ای دسته‌بندی‌ها -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">توزیع تیکت‌ها بر اساس دسته‌بندی</h6>
-                </div>
+    <!-- Priority Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <div class="chart-pie pt-4">
-                        <canvas id="categoryChart"></canvas>
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-pie-chart text-primary me-2"></i>
+                        توزیع اولویت
+                    </h5>
+                    <div class="d-flex justify-content-around text-center">
+                        <div>
+                            <div class="bg-danger bg-opacity-10 rounded-circle p-3 d-inline-block mb-2">
+                                <i class="bi bi-flag-fill text-danger fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">{{ high_tickets }}</h6>
+                            <small class="text-muted">بالا</small>
+                        </div>
+                        <div>
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3 d-inline-block mb-2">
+                                <i class="bi bi-flag-fill text-warning fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">{{ middle_tickets }}</h6>
+                            <small class="text-muted">متوسط</small>
+                        </div>
+                        <div>
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-block mb-2">
+                                <i class="bi bi-flag-fill text-success fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">{{ low_tickets }}</h6>
+                            <small class="text-muted">پایین</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- نمودار اولویت‌ها -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">تیکت‌ها بر اساس اولویت</h6>
-                </div>
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <div class="chart-bar pt-4">
-                        <canvas id="priorityChart"></canvas>
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-graph-up text-primary me-2"></i>
+                        نرخ بسته شدن
+                    </h5>
+                    <div class="text-center">
+                        <h2 class="fw-bold text-primary">{{ closure_rate|floatformat:1 }}%</h2>
+                        <div class="progress mt-3" style="height: 10px;">
+                            <div class="progress-bar bg-primary"
+                                 role="progressbar"
+                                 style="width: {{ closure_rate }}%"></div>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            از {{ total_tickets }} تیکت، {{ closed_tickets }} تا بسته شده
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-folder text-primary me-2"></i>
+                        دسته‌بندی‌ها
+                    </h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>تعداد دسته‌بندی‌ها</span>
+                        <span class="badge bg-primary">{{ categories_count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>میانگین تیکت در هر دسته</span>
+                        <span class="badge bg-info">{{ avg_tickets_per_category|floatformat:1 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span>پرکاربردترین</span>
+                        <span class="badge bg-success">{{ max_category }}</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ردیف سوم: جدول دسته‌بندی‌ها -->
+
+    <!-- Recent Tickets -->
     <div class="row">
         <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">جزئیات دسته‌بندی‌ها</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-clock-history text-primary me-2"></i>
+                        آخرین تیکت‌ها
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
-                            <thead class="thead-light">
+                        <table class="table table-hover">
+                            <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>موضوع</th>
                                     <th>دسته‌بندی</th>
-                                    <th>تعداد تیکت</th>
-                                    <th>درصد</th>
-                                    <th>وضعیت</th>
+                                    <th>اولویت</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for stat in category_stats %}
+                                {% for ticket in recent_tickets %}
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center ">
-                                            {% if stat.category__color %}
-                                            <div class="mr-2" style="width: 20px; height: 20px; background-color: {{ stat.category__color }}; border-radius: 4px;"></div>
-                                            {% endif %}
-                                            <span>{{ stat.category__name|default:"بدون دسته‌بندی" }}</span>
-                                        </div>
+                                        <a href="{% url 'tickets-detail' ticket.id %}" class="text-decoration-none">
+                                            {{ ticket.subject|truncatechars:50 }}
+                                        </a>
                                     </td>
                                     <td>
-                                        <span class="badge badge-primary badge-pill p-2 text-dark">{{ stat.count }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar {% cycle 'bg-primary' 'bg-success' 'bg-info' 'bg-warning' 'bg-danger' %}"
-                                                 role="progressbar"
-                                                 style="width: {% widthratio stat.count total_tickets 100 %}%;"
-                                                 aria-valuenow="{% widthratio stat.count total_tickets 100 %}"
-                                                 aria-valuemin="0"
-                                                 aria-valuemax="100">
-                                                {% widthratio stat.count total_tickets 100 %}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if stat.count > 10 %}
-                                        <span class="badge badge-danger text-dark">پرترافیک</span>
-                                        {% elif stat.count > 5 %}
-                                        <span class="badge badge-warning text-dark">متوسط</span>
+                                        {% if ticket.category %}
+                                        <span class="badge bg-secondary">{{ ticket.category.name }}</span>
                                         {% else %}
-                                        <span class="badge badge-success text-dark">کم</span>
+                                        <span class="text-muted">-</span>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ticket.priority == 'high' %}
+                                        <span class="badge bg-danger">بالا</span>
+                                        {% elif ticket.priority == 'middle' %}
+                                        <span class="badge bg-warning text-dark">متوسط</span>
+                                        {% elif ticket.priority == 'low' %}
+                                        <span class="badge bg-success">پایین</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ticket.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'tickets-detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">هیچ تیکتی در دسته‌بندی‌ها وجود ندارد.</td>
+                                    <td colspan="5" class="text-center">تیکتی وجود ندارد</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

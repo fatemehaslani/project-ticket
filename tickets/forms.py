@@ -3,13 +3,26 @@ import re
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django import forms
+from django.http import request
+
+#from django.template.context_processors import request
+
 from .models import *
+from .services.permissions import get_assignees
+
 
 class MultiFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
 
 class TicketForm(forms.ModelForm):
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        #queryset=get_assignees(User.objects.filter(pk=32)),
+        label="Select Users",
+        help_text="Choose multiple users",
+        required=True,
+    )
     attachments = forms.FileField(
         widget=MultiFileInput(attrs={
             "multiple": True,
@@ -38,12 +51,27 @@ class TicketForm(forms.ModelForm):
 
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.required = False
             field.widget.attrs.update({
                 'class': 'form-control'
             })
+
+            if self.request and self.request.user.is_authenticated:
+                allowed_users = get_assignees(self.request.user)
+
+                if isinstance(allowed_users, list):
+                    user_ids = [user.id for user in allowed_users]
+                    self.fields['users'].queryset = (User
+                                                         .objects
+                                                         .exclude(id=self.request.user.id)
+                                                         .filter(id__in=user_ids))
+                else:
+                    self.fields['users'].queryset = allowed_users
+            else:
+                self.fields['users'].queryset = User.objects.none()
 
     def clean_tags(self):
         tags = self.cleaned_data.get('tags')
@@ -72,6 +100,8 @@ class TicketForm(forms.ModelForm):
                 raise forms.ValidationError(f"{f.name} exceeds 5 MB size limit.")
         return files
 
+    #def get_allowed_users(self):
+        #return get_assignees(self.request.user)
 
 class RegisterForm(forms.ModelForm):
     password1 = forms.CharField(
