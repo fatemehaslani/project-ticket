@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load highlight %}
-{% load button_tags %}
+
 {% block title %}
     index
 {% endblock %}
 
 {% block content %}
-    {% comment %}<div class="container-lg">
+    <div class="container-lg">
 
     {% if messages %}
     <div class="my-3">
@@ -20,34 +19,13 @@
     </div>
     {% endif %}
 
-    {% include "ticket-search.html" %}
-
     <div class="card shadow">
         <div class="card-body">
            <div class="table-responsive">
                 <table class="table table-striped text-center align-middle">
                 <thead class="table-secondary">
                     <tr>
-
-                        {% for col, label in columns %}
-                            <th>
-                                <a href="?q={{ search_query }}&category={{ selected_category }}&priority={{ selected_priority }}&sort={{ col }}&dir={% if sort == col and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                                    {{ label }}
-                                    {% if sort == col %}
-                                        {% if direction == 'asc' %}
-                                            <i class="bi bi-arrow-up-short"></i>
-                                        {% else %}
-                                            <i class="bi bi-arrow-down-short"></i>
-                                        {% endif %}
-                                    {% endif %}
-                                </a>
-                            </th>
-                        {% endfor %}
-
-
-                                                <th>
-                            <a href="?sort=subject&dir={% if direction == 'asc' %}desc{% else %}asc{% endif %}">Subject</a>
-                        </th>
+                        <th>Subject</th>
                         <th>Tracking code</th>
                         <th>Category</th>
                         <th class="d-none d-lg-table-cell">Tags</th>
@@ -62,30 +40,27 @@
                 {% for ticket in tickets %}
                     <tr>
                         <td class="text-start">
-                            <a href="{% url 'tickets-detail' ticket.id %}" class="btn-link text-decoration-none">{{ ticket.subject|highlight:search_query }}</a>
+                            <a href="#" class="btn-link text-decoration-none">{{ ticket.subject }}</a>
                         </td>
                         <td>{{ ticket.tracking_code }}</td>
                         <td>{{ ticket.category }}</td>
                         <td class="d-none d-lg-table-cell">
+                            {% for tag in ticket.tags.all|slice:"2" %}
                                 <span class="badge bg-secondary">{{ tag.name }}</span>
-                           {% for tag in ticket.tags.all|slice:"2" %}
                                 {% empty %}
                                 <span class="text-muted">-</span>
                                 {% endfor %}
                         </td>
-                        <td>{{ ticket.created_at|date:"Y/m/d " }}</td>
+                        <td>{{ ticket.max_reply_date|date:"Y/m/d " }}</td>
                         <td>
                             <span class="badge" style="background-color: {{ ticket.get_priority_color }}">{{ ticket.priority }}</span>
                         </td>
                         <td>{{ ticket.created_by }}</td>
-                        <td>{{ ticket.max_reply_date|date:"Y/m/d h:m" }}</td>
-                        <td>                            <a href="{% url 'tickets-update' ticket.id %}" class="text-decoration-none edit-confirm">
+                        <td>{{ ticket.created_at|date:"Y/m/d h:m" }}</td>
+                        <td>
+                            <a href="{% url 'tickets-update' ticket.id %}" class="text-decoration-none edit-confirm">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
-                            {% include 'components/button.html' with label="Edit" icon="bi-pencil-square"%}
-                            {% button label="" url=ticket.get_edit_url  icon="bi-pencil-square"%}
-                            {% button label="" url=ticket.get_delete_url icon="bi-trash" color="danger"%}
-
                             <a href="{% url 'tickets-delete' ticket.id %}"
                                 class="text-decoration-none text-danger delete-confirm">
                                 <i class="bi bi-trash"></i>
@@ -100,488 +75,7 @@
            </div>
         </div>
     </div>
-    </div>{% endcomment %}
-
-<div class="container-lg">
-    {% if messages %}
-    <div class="my-3">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
     </div>
-    {% endif %}
-
-    {% include "ticket-search.html" %}
-
-    <!-- View Mode Switcher -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h4 mb-0">
-            <i class="bi bi-ticket-detailed me-2"></i>
-            Tickets
-        </h2>
-        <div class="btn-group" role="group">
-            <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}{% if with_close %}with_close={{ with_close }}&{% endif %}sort={{ sort_by }}&dir={{ direction }}&view=table"
-               class="btn btn-outline-secondary {% if view_mode == 'table' %}active{% endif %}">
-                <i class="bi bi-table"></i> table
-            </a>
-            <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}{% if with_close %}with_close={{ with_close }}&{% endif %}sort={{ sort_by }}&dir={{ direction }}&view=card"
-               class="btn btn-outline-secondary {% if view_mode == 'card' %}active{% endif %}">
-                <i class="bi bi-grid-3x3-gap"></i> card
-            </a>
-        </div>
-    </div>
-
-    {% if view_mode == 'table' %}
-    <!-- Table View -->
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped text-center align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            {% for col, label in columns %}
-                                {% if col != 'actions' %}
-                                <th>
-                                    <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}{% if with_close %}with_close={{ with_close }}&{% endif %}sort={{ col }}&dir={% if sort_by == col and direction == 'asc' %}desc{% else %}asc{% endif %}&view={{ view_mode }}"
-                                       class="text-decoration-none text-dark">
-                                        {% if col == 'subject' %}
-                                            <i class="bi bi-chat-dots me-1"></i>
-                                        {% elif col == 'tracking_code' %}
-                                            <i class="bi bi-upc-scan me-1"></i>
-                                        {% elif col == 'category' %}
-                                            <i class="bi bi-folder me-1"></i>
-                                        {% elif col == 'tags' %}
-                                            <i class="bi bi-tags me-1"></i>
-                                        {% elif col == 'created_at' %}
-                                            <i class="bi bi-calendar3 me-1"></i>
-                                        {% elif col == 'priority' %}
-                                            <i class="bi bi-flag me-1"></i>
-                                        {% elif col == 'created_by' %}
-                                            <i class="bi bi-person me-1"></i>
-                                        {% elif col == 'max_reply_date' %}
-                                            <i class="bi bi-clock-history me-1"></i>
-                                        {% endif %}
-                                        {{ label }}
-                                        {% if sort_by == col %}
-                                            {% if direction == 'asc' %}
-                                                <i class="bi bi-arrow-up"></i>
-                                            {% else %}
-                                                <i class="bi bi-arrow-down"></i>
-                                            {% endif %}
-                                        {% endif %}
-                                    </a>
-                                </th>
-                                {% endif %}
-                            {% endfor %}
-                            <th>
-                                <i class="bi bi-gear me-1"></i>
-                                عملیات
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ticket in tickets %}
-                            <tr>
-                                <td class="text-start">
-                                    <a href="{% url 'tickets-detail' ticket.id %}"
-                                       class="text-decoration-none fw-semibold">
-                                        <i class="bi bi-chat-text me-1 text-primary"></i>
-                                        {{ ticket.subject|truncatechars:50 }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info text-dark">
-                                        <i class="bi bi-upc-scan me-1"></i>
-                                        {{ ticket.tracking_code }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if ticket.category %}
-                                        <span class="badge bg-secondary">
-                                            <i class="bi bi-folder me-1"></i>
-                                            {{ ticket.category.name }}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="d-none d-lg-table-cell">
-                                    {% for tag in ticket.tags.all|slice:"2" %}
-                                        <span class="badge bg-light text-dark border me-1">
-                                            <i class="bi bi-tag me-1"></i>
-                                            {{ tag.name }}
-                                        </span>
-                                    {% empty %}
-                                        <span class="text-muted">-</span>
-                                    {% endfor %}
-                                </td>
-                                <td>
-                                    <i class="bi bi-calendar3 me-1 text-muted"></i>
-                                    {{ ticket.created_at|date:"Y/m/d" }}
-                                </td>
-                                <td>
-                                    {% if ticket.priority == 'high' %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-flag-fill me-1"></i>
-                                            {{ ticket.get_priority_display }}
-                                        </span>
-                                    {% elif ticket.priority == 'medium' %}
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-flag me-1"></i>
-                                            {{ ticket.get_priority_display }}
-                                        </span>
-                                    {% elif ticket.priority == 'low' %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-flag me-1"></i>
-                                            {{ ticket.get_priority_display }}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-warning">
-                                            <i class="bi bi-flag me-1"></i>
-                                            {{ ticket.get_priority_display }}
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if ticket.created_by %}
-                                        <i class="bi bi-person-circle me-1 text-muted"></i>
-                                        {{ ticket.created_by.get_full_name|default:ticket.created_by.username }}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if ticket.max_reply_date %}
-                                        <i class="bi bi-clock me-1 text-muted"></i>
-                                        {{ ticket.max_reply_date|date:"Y/m/d H:i" }}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <!-- Dropdown menu with three dots -->
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'tickets-detail' ticket.id %}">
-                                                    <i class="bi bi-eye text-primary me-2"></i>
-                                                    مشاهده
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'tickets-update' ticket.id %}">
-                                                    <i class="bi bi-pencil text-warning me-2"></i>
-                                                    ویرایش
-                                                </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item text-danger" href="{% url 'tickets-delete' ticket.id %}">
-                                                    <i class="bi bi-trash text-danger me-2"></i>
-                                                    حذف
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="9" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="bi bi-inbox fs-1"></i>
-                                        <p class="mt-3">هیچ تیکتی یافت نشد</p>
-                                        <a href="?view={{ view_mode }}" class="btn btn-outline-primary btn-sm mt-2">
-                                            <i class="bi bi-arrow-clockwise"></i> بازنشانی فیلترها
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if is_paginated %}
-            <nav aria-label="Page navigation" class="mt-3">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link"
-                               href="?page=1&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if with_close %}&with_close={{ with_close }}{% endif %}">
-                                <i class="bi bi-chevron-double-left"></i>
-                            </a>
-                        </li>
-                    {% endif %}
-
-                    {% for num in paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item">
-                                <a class="page-link"
-                                   href="?page={{ num }}&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if with_close %}&with_close={{ with_close }}{% endif %}">
-                                    {{ num }}
-                                </a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link"
-                               href="?page={{ page_obj.next_page_number }}&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if with_close %}&with_close={{ with_close }}{% endif %}">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-        </div>
-    </div>
-    {% else %}
-    <!-- Card View -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for ticket in tickets %}
-            <div class="col">
-                <div class="card h-100 shadow-sm border">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <small class="text-muted fw-bold">
-                            <i class="bi bi-upc-scan me-1"></i>
-                            #{{ ticket.tracking_code }}
-                        </small>
-                        {% if ticket.priority == 'high' %}
-                            <span class="badge bg-danger">
-                                <i class="bi bi-flag-fill me-1"></i>
-                                {{ ticket.get_priority_display }}
-                            </span>
-                        {% elif ticket.priority == 'medium' %}
-                            <span class="badge bg-warning text-dark">
-                                <i class="bi bi-flag me-1"></i>
-                                {{ ticket.get_priority_display }}
-                            </span>
-                        {% elif ticket.priority == 'low' %}
-                            <span class="badge bg-success">
-                                <i class="bi bi-flag me-1"></i>
-                                {{ ticket.get_priority_display }}
-                            </span>
-                        {% else %}
-                            <span class="badge bg-warning">
-                                <i class="bi bi-flag me-1"></i>
-                                {{ ticket.get_priority_display }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <a href="{% url 'tickets-detail' ticket.id %}"
-                               class="text-decoration-none text-dark fw-bold">
-                                <i class="bi bi-chat-text me-1 text-primary"></i>
-                                {{ ticket.subject|truncatechars:60 }}
-                            </a>
-                        </h6>
-
-                        {% if ticket.description %}
-                            <p class="card-text small text-muted mt-2">
-                                {{ ticket.description|truncatechars:100 }}
-                            </p>
-                        {% endif %}
-
-                        <div class="mt-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-folder me-2 text-muted"></i>
-                                <small class="text-muted">
-                                    {% if ticket.category %}
-                                        {{ ticket.category.name }}
-                                    {% else %}
-                                        <span class="text-muted">بدون دسته‌بندی</span>
-                                    {% endif %}
-                                </small>
-                            </div>
-
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle me-2 text-muted"></i>
-                                <small class="text-muted">
-                                    {% if ticket.created_by %}
-                                        {{ ticket.created_by.get_full_name|default:ticket.created_by.username }}
-                                    {% else %}
-                                        <span class="text-muted">نامشخص</span>
-                                    {% endif %}
-                                </small>
-                            </div>
-
-                            {% if ticket.tags.all %}
-                                <div class="mt-3">
-                                    {% for tag in ticket.tags.all|slice:"3" %}
-                                        <span class="badge bg-light text-dark border me-1 mb-1">
-                                            <i class="bi bi-tag me-1"></i>
-                                            {{ tag.name }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="card-footer bg-white border-top">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="bi bi-calendar3"></i>
-                                {{ ticket.created_at|date:"Y/m/d" }}
-                            </small>
-
-                            <!-- Dropdown menu for card view -->
-                             <div class="dropdown dropup">
-                             <button class="btn btn-sm btn-outline-secondary"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                    data-bs-auto-close="true"
-                                    data-bs-reference="parent">
-                                <i class="bi bi-three-dots-vertical"></i>
-                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'tickets-detail' ticket.id %}">
-                                        <i class="bi bi-eye text-primary me-2"></i>
-                                        مشاهده
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'tickets-update' ticket.id %}">
-                                        <i class="bi bi-pencil text-warning me-2"></i>
-                                        ویرایش
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="{% url 'tickets-delete' ticket.id %}">
-                                        <i class="bi bi-trash text-danger me-2"></i>
-                                        حذف
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-
-                        {% if ticket.max_reply_date %}
-                            <div class="mt-2 small text-muted">
-                                <i class="bi bi-clock-history"></i>
-                                پاسخ تا: {{ ticket.max_reply_date|date:"Y/m/d H:i" }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% empty %}
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
-                    <h5 class="text-muted">هیچ تیکتی یافت نشد</h5>
-                    <a href="?view={{ view_mode }}" class="btn btn-outline-primary btn-sm mt-2">
-                        <i class="bi bi-arrow-clockwise"></i> بازنشانی فیلترها
-                    </a>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
-
-<!-- Pagination section (duplicate ones removed, keeping only one clean version) -->
-{% if page_obj.has_other_pages %}
-<div class="row mt-4">
-    <div class="col-md-6">
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-start">
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?q={{ search_query }}&category={{ selected_category }}&priority={{ selected_priority }}&page={{ page_obj.previous_page_number }}">
-                            <i class="bi bi-chevron-right"></i>
-                            Previous
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">
-                            <i class="bi bi-chevron-right"></i>
-                            Previous
-                        </span>
-                    </li>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link"
-                               href="?q={{ search_query }}&category={{ selected_category }}&priority={{ selected_priority }}&page={{ num }}">
-                                {{ num }}
-                            </a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?q={{ search_query }}&category={{ selected_category }}&priority={{ selected_priority }}&page={{ page_obj.next_page_number }}">
-                            Next
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">
-                            Next
-                            <i class="bi bi-chevron-left"></i>
-                        </span>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-    </div>
-    <div class="col-md-6">
-        <p class="text-sm text-body-secondary text-end">
-            <i class="bi bi-file-text me-1"></i>
-            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} results
-        </p>
-    </div>
-</div>
-{% endif %}
-
-
-<style>
-    .btn-group .btn.active {
-        background-color: #6c757d;
-        color: white;
-        border-color: #6c757d;
-    }
-
-    .card {
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
-    }
-
-
-</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const deleteBox = document.querySelectorAll('.delete-confirm');
@@ -597,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-{% comment %}
+
 document.addEventListener('DOMContentLoaded', function () {
     const editBox = document.querySelectorAll('.edit-confirm');
 
@@ -611,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     })
-}){% endcomment %}
+})
 </script>
 
 {% endblock %}
